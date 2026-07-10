@@ -73,15 +73,19 @@ jobs:
           if css.count('engram-dexter-motion-v7') != 1:
               raise SystemExit('Dexter motion layer was embedded more than once')
 
+          mutation_count = js.count('new MutationObserver')
+          intersection_count = js.count('new IntersectionObserver')
+          class_observer_count = js.count("attributeFilter: ['class']")
+
           Path('/tmp/engram-material.js').write_text(js, encoding='utf-8')
           report = [
               'Dexter motion validation: PASS',
               f'HTML bytes: {html_path.stat().st_size}',
               f'CSS characters: {len(css)}',
               f'JavaScript characters: {len(js)}',
-              f'MutationObservers retained: {js.count("new MutationObserver")}',
-              f'IntersectionObservers retained: {js.count("new IntersectionObserver")}',
-              f'Class-attribute observers retained: {js.count("attributeFilter: [\\\'class\\\']")}',
+              f'MutationObservers retained: {mutation_count}',
+              f'IntersectionObservers retained: {intersection_count}',
+              f'Class-attribute observers retained: {class_observer_count}',
               'Screen transition: opacity + translate3d only',
               'Scroll reveal observer: removed',
               'Tab hero/chart replay: removed',
