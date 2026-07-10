@@ -1,0 +1,35 @@
+/* engram-tab-smooth-v6 */
+
+/* Premium tab choreography is disabled; the base Material 3 tab transition remains. */
+.screen.m3-tab-entering .m3-hero-card.m3-hero-replay,
+.m3-chart-premium.m3-chart-updating .m3-data-line,
+.m3-chart-premium.m3-chart-updating .m3-data-point,
+.m3-chart-premium.m3-chart-updating .m3-data-bar{
+  animation:none!important
+}
+
+/* Avoid retaining unnecessary composition layers between interactions. */
+.m3-premium-card:not(.m3-tilt-active),
+.m3-chart-premium,
+.m3-hero-card{
+  will-change:auto!important
+}
+
+/* Touch devices keep the premium visual treatment but use static decorative layers. */
+@media(hover:none){
+  .m3-premium-grid,
+  .m3-premium-mesh::before,
+  .m3-premium-mesh::after,
+  .m3-premium-shine,
+  .m3-hero-card::before,
+  .m3-hero-card::after{
+    animation:none!important
+  }
+  .m3-premium-card,
+  .m3-premium-card.m3-tilt-active{
+    transform:none!important;
+    transition:filter .2s,box-shadow .25s!important
+  }
+  .m3-premium-grid{background-position:0 0!important}
+  .m3-premium-shine{opacity:.18!important}
+}
