@@ -43,7 +43,13 @@ public class MainActivity extends AppCompatActivity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setMediaPlaybackRequiresUserGesture(false);
 
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                installMaterialLayer(view);
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onShowFileChooser(WebView view,
@@ -63,6 +69,40 @@ public class MainActivity extends AppCompatActivity {
         webView.addJavascriptInterface(new AndroidBridge(this), "Android");
 
         webView.loadUrl("file:///android_asset/engram.html");
+    }
+
+    /**
+     * The app is distributed as a self-unpacking HTML bundle. Waiting for its
+     * final .topbar node lets the Material 3 layer attach to the real document
+     * without modifying the bundled tracker or its total-score logic.
+     */
+    private void installMaterialLayer(WebView view) {
+        String bootstrap =
+                "(function(){" +
+                "if(window.__engramMaterialBootstrap)return;" +
+                "window.__engramMaterialBootstrap=true;" +
+                "var attempts=0;" +
+                "var timer=setInterval(function(){" +
+                "attempts++;" +
+                "if(document.head&&document.body&&document.querySelector('.topbar')){" +
+                "if(!document.getElementById('engram-material-css')){" +
+                "var link=document.createElement('link');" +
+                "link.id='engram-material-css';" +
+                "link.rel='stylesheet';" +
+                "link.href='file:///android_asset/material_you.css?v=1';" +
+                "document.head.appendChild(link);" +
+                "}" +
+                "if(!document.getElementById('engram-material-js')){" +
+                "var script=document.createElement('script');" +
+                "script.id='engram-material-js';" +
+                "script.src='file:///android_asset/material_you.js?v=1';" +
+                "document.body.appendChild(script);" +
+                "}" +
+                "clearInterval(timer);" +
+                "}else if(attempts>240){clearInterval(timer);}" +
+                "},50);" +
+                "})();";
+        view.evaluateJavascript(bootstrap, null);
     }
 
     private void applyImmersive() {
