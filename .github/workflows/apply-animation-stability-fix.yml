@@ -1,0 +1,71 @@
+name: Apply animation stability fix
+
+on:
+  push:
+    branches:
+      - codex/material-you-premium-polish
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out premium branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/material-you-premium-polish
+          fetch-depth: 0
+
+      - name: Apply stability fix
+        run: python3 scripts/apply_stability_fix.py
+
+      - name: Validate standalone bundle
+        run: |
+          python3 - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          html = Path('app/src/main/assets/engram.html').read_text(encoding='utf-8')
+          required = [
+              'engram-premium-stability-v4',
+              'attributeOldValue: true',
+              'screen === lastActiveScreen',
+              'm3ContextNumberStable',
+              'visibility:visible!important',
+              'f-dayTotal',
+          ]
+          missing = [token for token in required if token not in html]
+          if missing:
+              raise SystemExit(f'Missing stability tokens: {missing}')
+
+          pattern = re.compile(
+              r'materialScript\.textContent\s*=\s*'
+              r'("(?:\\.|[^"\\])*")\s*;'
+          )
+          match = pattern.search(html)
+          if not match:
+              raise SystemExit('Could not extract material script')
+          script = json.loads(match.group(1))
+          Path('/tmp/engram-material-stable.js').write_text(script, encoding='utf-8')
+          if script.count('engram-premium-stability-v4') != 0:
+              raise SystemExit('CSS marker unexpectedly present in JavaScript')
+          print(f'Validated standalone HTML: {len(html):,} characters')
+          PY
+          node --check /tmp/engram-material-stable.js
+          git diff --check
+
+      - name: Commit stable standalone HTML
+        run: |
+          if git diff --quiet -- app/src/main/assets/engram.html; then
+            echo 'engram.html already includes the stability fix.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/assets/engram.html
+          git commit -m 'Fix hero number and chart animation loops'
+          git push origin HEAD:codex/material-you-premium-polish
