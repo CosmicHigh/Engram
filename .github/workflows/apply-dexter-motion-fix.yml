@@ -69,13 +69,17 @@ jobs:
           if css.count('{') != css.count('}'):
               raise SystemExit('CSS braces are unbalanced')
 
+          mutation_count = js.count('new MutationObserver')
+          intersection_count = js.count('new IntersectionObserver')
+          class_observer_count = js.count("attributeFilter: ['class']")
+
           Path('/tmp/engram-final-motion.js').write_text(js, encoding='utf-8')
           report = [
               'Final Dexter motion validation: PASS',
               f'HTML bytes: {html_path.stat().st_size}',
-              f'MutationObserver declarations retained: {js.count("new MutationObserver")}',
-              f'IntersectionObserver declarations retained: {js.count("new IntersectionObserver")}',
-              f'Class-attribute observers retained: {js.count("attributeFilter: [\'class\']")}',
+              f'MutationObserver declarations retained: {mutation_count}',
+              f'IntersectionObserver declarations retained: {intersection_count}',
+              f'Class-attribute observers retained: {class_observer_count}',
               'Tab transition: one screen-level opacity/translate3d animation',
               'Navigation: indicator and color transitions only',
               'Hero decoration: static',
