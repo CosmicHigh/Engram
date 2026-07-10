@@ -89,13 +89,13 @@ public class MainActivity extends AppCompatActivity {
                 "var link=document.createElement('link');" +
                 "link.id='engram-material-css';" +
                 "link.rel='stylesheet';" +
-                "link.href='file:///android_asset/material_you.css?v=1';" +
+                "link.href='file:///android_asset/material_you.css';" +
                 "document.head.appendChild(link);" +
                 "}" +
                 "if(!document.getElementById('engram-material-js')){" +
                 "var script=document.createElement('script');" +
                 "script.id='engram-material-js';" +
-                "script.src='file:///android_asset/material_you.js?v=1';" +
+                "script.src='file:///android_asset/material_you.js';" +
                 "document.body.appendChild(script);" +
                 "}" +
                 "clearInterval(timer);" +
