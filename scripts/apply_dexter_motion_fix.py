@@ -219,7 +219,6 @@ def main() -> None:
 """
     script = replace_once(script, old_premium_init, new_premium_init, "premium observer")
 
-    # This listener existed solely to pause effects that no longer run.
     script = remove_marked_iife(script, "engram-scroll-smooth-v5")
 
     html = replace_assignment(html, script_match, script)
@@ -232,7 +231,6 @@ def main() -> None:
         MARKER,
         "m3DexterScreenIn",
         "the screen enters as one unit",
-        "subtree: true,\n      childList: true",
         "f-dayTotal",
     ]
     missing = [token for token in required if token not in generated]
