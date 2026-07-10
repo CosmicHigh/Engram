@@ -1,0 +1,154 @@
+/* engram-dexter-motion-v7 */
+
+/* One interaction, one transition: keep tab changes to a single screen entrance. */
+.screen.active{
+  animation:m3DexterScreenIn .42s cubic-bezier(.2,0,0,1) both!important
+}
+@keyframes m3DexterScreenIn{
+  from{opacity:0;transform:translate3d(0,14px,0)}
+  to{opacity:1;transform:none}
+}
+
+/* Cards are ready immediately; no observer-driven scroll reveal or delayed settling. */
+.m3-reveal,
+.m3-reveal.m3-visible,
+.m3-reveal-settled{
+  opacity:1!important;
+  transform:none!important;
+  filter:none!important;
+  transition:none!important;
+  will-change:auto!important
+}
+
+/* Premium visuals stay, but all continuously running decorative motion stops. */
+body::before,
+body::after,
+.m3-premium-grid,
+.m3-premium-mesh::before,
+.m3-premium-mesh::after,
+.m3-premium-shine,
+.m3-hero-card::before,
+.m3-hero-card::after,
+.btn-primary,
+.btn-primary::after,
+.nav-btn.active::before,
+.m3-empty-core,
+.m3-empty-orbit,
+.sheet::before{
+  animation:none!important
+}
+
+/* Hero values and surfaces are static during tab navigation. */
+.screen.active .m3-hero-card,
+.m3-hero-card.m3-hero-replay,
+.m3-hero-card.m3-wiggle,
+.m3-hero-card .v,
+.m3-hero-card .v.m3-pop,
+.m3-premium-card,
+.m3-premium-card.m3-tilt-active{
+  animation:none!important;
+  transform:none!important;
+  filter:none!important
+}
+.m3-premium-card,
+.m3-hero-card{
+  will-change:auto!important
+}
+.m3-premium-shine{opacity:.16!important}
+.m3-premium-grid{background-position:0 0!important}
+
+/* Charts render immediately. Dexter only animates selected bars; ENGRAM keeps all charts static on tab switches. */
+.chart-wrap svg path,
+.chart-wrap svg polyline,
+.chart-wrap svg circle,
+.chart-wrap svg rect,
+.m3-data-line,
+.m3-data-point,
+.m3-data-bar,
+.m3-chart-premium.m3-chart-updating,
+.m3-chart-premium.m3-chart-updating .m3-data-line,
+.m3-chart-premium.m3-chart-updating .m3-data-point,
+.m3-chart-premium.m3-chart-updating .m3-data-bar{
+  animation:none!important
+}
+
+/* Remove broad colour/background interpolation across the whole view. */
+body,
+.topbar,
+.card,
+.stat,
+.hist-item,
+.day-row,
+.chart-wrap,
+input,
+select,
+textarea{
+  transition-property:none!important
+}
+.card,
+.stat,
+.hist-item,
+.day-row{
+  transition:transform .18s cubic-bezier(.2,0,0,1),box-shadow .22s ease!important
+}
+input:focus,
+select:focus,
+textarea:focus{
+  transition:none!important
+}
+
+/* Keep the small, local feedback Dexter uses. */
+.nav-btn{
+  transition:color .24s ease,background-color .24s ease!important
+}
+.nav-btn::before{
+  transition:transform .32s cubic-bezier(.34,1.35,.5,1),opacity .24s ease!important
+}
+.nav-btn svg,
+.nav-btn .nl{
+  transition:color .24s ease,transform .24s ease!important
+}
+.nav-btn.m3-bounce svg{
+  animation:none!important
+}
+.btn:active,
+.icon-btn:active,
+.gear:active,
+.m3-theme-toggle:active,
+.weeknav .wbtn:active{
+  transition:transform .16s cubic-bezier(.34,1.3,.5,1)!important
+}
+
+/* Explicit action animations remain: real value changes, sheets and toasts. */
+.m3-context-number{
+  animation:m3ContextNumberStable .56s cubic-bezier(.12,1.28,.22,1)!important
+}
+.m3-context-update{
+  animation:m3ContextCard .64s cubic-bezier(.12,1.24,.22,1)!important
+}
+.sheet.open,
+.scrim.open + .sheet{
+  animation:m3SheetPlay .5s cubic-bezier(.2,0,0,1)!important
+}
+.m3-toast.show{
+  animation:m3ToastSpring .42s cubic-bezier(.34,1.28,.5,1)!important
+}
+
+@media(hover:none){
+  .m3-premium-card,
+  .m3-premium-card.m3-tilt-active{
+    transform:none!important;
+    transition:none!important
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .screen.active,
+  .m3-context-number,
+  .m3-context-update,
+  .sheet.open,
+  .scrim.open + .sheet,
+  .m3-toast.show{
+    animation:none!important
+  }
+}
