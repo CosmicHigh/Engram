@@ -4,7 +4,7 @@ CSS characters: 46967
 JavaScript characters: 24259
 MutationObservers retained: 7
 IntersectionObservers retained: 0
-Class-attribute observers retained: 0
+Class-attribute observers retained: 1
 Screen transition: opacity + translate3d only
 Scroll reveal observer: removed
 Tab hero/chart replay: removed
