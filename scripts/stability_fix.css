@@ -1,0 +1,34 @@
+/* engram-premium-stability-v4 */
+
+/* Hero values must remain visible between genuine data changes. */
+.m3-hero-card .v,
+.m3-hero-card .v.m3-pop,
+.m3-hero-card.m3-value-burst .v,
+.m3-premium-card.m3-value-burst .v{
+  animation:none!important;
+  opacity:1!important;
+  transform:none!important;
+  filter:none!important;
+  visibility:visible!important
+}
+.m3-hero-card .v.m3-context-number{
+  animation:m3ContextNumberStable .56s cubic-bezier(.12,1.28,.22,1)!important;
+  opacity:1!important;
+  visibility:visible!important
+}
+
+/* Remove the full-container halo. Series motion remains available on tab entry. */
+.m3-chart-premium.m3-chart-updating{
+  animation:none!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--outline-v) 48%,transparent),0 13px 31px rgba(25,29,38,.08)!important
+}
+
+@keyframes m3ContextNumberStable{
+  0%{opacity:.72;transform:translateY(5px) scale(.91)}
+  62%{opacity:1;transform:translateY(-2px) scale(1.075)}
+  100%{opacity:1;transform:none}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .m3-hero-card .v.m3-context-number{animation:none!important}
+}
