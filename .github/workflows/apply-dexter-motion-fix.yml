@@ -1,4 +1,4 @@
-name: Inspect remaining motion observers
+name: Apply final Dexter motion observer fix
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  inspect:
+  apply-and-validate:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -18,52 +18,80 @@ jobs:
           ref: codex/material-you-premium-polish
           fetch-depth: 0
 
-      - name: Extract observer contexts
+      - name: Remove final class observer
+        run: python3 scripts/apply_final_observer_fix.py
+
+      - name: Validate standalone bundle
         run: |
           python3 - <<'PY'
           import json
           import re
           from pathlib import Path
 
-          html = Path('app/src/main/assets/engram.html').read_text(encoding='utf-8')
-          pattern = re.compile(
-              r'materialScript\.textContent\s*=\s*'
-              r'("(?:\\.|[^"\\])*")\s*;'
-          )
-          match = pattern.search(html)
-          if not match:
-              raise SystemExit('Could not extract material script')
-          js = json.loads(match.group(1))
+          html_path = Path('app/src/main/assets/engram.html')
+          html = html_path.read_text(encoding='utf-8')
 
-          lines = js.splitlines()
-          hits = []
-          for index, line in enumerate(lines):
-              if 'new MutationObserver' in line or "attributeFilter: ['class']" in line or 'attributes: true' in line:
-                  hits.append(index)
+          def extract(name):
+              pattern = re.compile(
+                  rf'{name}\.textContent\s*=\s*'
+                  r'("(?:\\.|[^"\\])*")\s*;'
+              )
+              match = pattern.search(html)
+              if not match:
+                  raise SystemExit(f'Could not extract {name}')
+              return json.loads(match.group(1))
 
-          selected = set()
-          for index in hits:
-              selected.update(range(max(0, index - 12), min(len(lines), index + 18)))
+          css = extract('materialStyle')
+          js = extract('materialScript')
 
-          out = []
-          previous = -2
-          for index in sorted(selected):
-              if index > previous + 1:
-                  out.append('---')
-              out.append(f'{index + 1:04d}: {lines[index]}')
-              previous = index
+          required = [
+              'engram-dexter-motion-v7',
+              'engram-dexter-observer-v8',
+              'm3DexterScreenIn',
+              'f-dayTotal',
+          ]
+          forbidden = [
+              'new IntersectionObserver',
+              "attributeFilter: ['class']",
+              'refreshTab = false',
+              'engram-scroll-smooth-v5',
+              'engram-tab-smooth-v6',
+              "screen.classList.add('m3-tab-entering')",
+              'replayCharts(screen)',
+          ]
 
-          out.append('---')
-          out.append(f'MutationObservers: {js.count("new MutationObserver")}')
-          out.append(f'Class observers: {js.count("attributeFilter: [\'class\']")}')
-          Path('analysis/motion-observer-context.txt').write_text('\n'.join(out) + '\n', encoding='utf-8')
-          print('\n'.join(out))
+          missing = [token for token in required if token not in html]
+          present = [token for token in forbidden if token in html]
+          if missing:
+              raise SystemExit(f'Missing required tokens: {missing}')
+          if present:
+              raise SystemExit(f'Heavy navigation motion remains: {present}')
+          if css.count('{') != css.count('}'):
+              raise SystemExit('CSS braces are unbalanced')
+
+          Path('/tmp/engram-final-motion.js').write_text(js, encoding='utf-8')
+          report = [
+              'Final Dexter motion validation: PASS',
+              f'HTML bytes: {html_path.stat().st_size}',
+              f'MutationObserver declarations retained: {js.count("new MutationObserver")}',
+              f'IntersectionObserver declarations retained: {js.count("new IntersectionObserver")}',
+              f'Class-attribute observers retained: {js.count("attributeFilter: [\'class\']")}',
+              'Tab transition: one screen-level opacity/translate3d animation',
+              'Navigation: indicator and color transitions only',
+              'Hero decoration: static',
+              'Charts on tab switch: static',
+              'Explicit action feedback: retained',
+          ]
+          Path('analysis/final-motion-validation.txt').write_text('\n'.join(report) + '\n', encoding='utf-8')
+          print('\n'.join(report))
           PY
+          node --check /tmp/engram-final-motion.js
+          git diff --check
 
-      - name: Commit observer context
+      - name: Commit generated HTML and validation
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add analysis/motion-observer-context.txt
-          git commit -m 'Inspect remaining motion observers'
+          git add app/src/main/assets/engram.html analysis/final-motion-validation.txt
+          git commit -m 'Remove final tab class observer'
           git push origin HEAD:codex/material-you-premium-polish
