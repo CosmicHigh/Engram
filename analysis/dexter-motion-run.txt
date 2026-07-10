@@ -1,4 +1,3 @@
-Applied Dexter-style motion architecture to /home/runner/work/Engram/Engram/app/src/main/assets/engram.html
-Standalone size: 203,870 bytes
+Dexter-style motion fix is already embedded.
 
 EXIT_CODE=0
