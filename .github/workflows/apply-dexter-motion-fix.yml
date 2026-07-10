@@ -1,4 +1,4 @@
-name: Validate Dexter-style motion architecture
+name: Inspect remaining motion observers
 
 on:
   push:
@@ -9,98 +9,61 @@ permissions:
   contents: write
 
 jobs:
-  validate:
+  inspect:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
-      - name: Check out premium branch
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: codex/material-you-premium-polish
           fetch-depth: 0
 
-      - name: Extract and audit standalone bundle
+      - name: Extract observer contexts
         run: |
           python3 - <<'PY'
           import json
           import re
           from pathlib import Path
 
-          html_path = Path('app/src/main/assets/engram.html')
-          html = html_path.read_text(encoding='utf-8')
+          html = Path('app/src/main/assets/engram.html').read_text(encoding='utf-8')
+          pattern = re.compile(
+              r'materialScript\.textContent\s*=\s*'
+              r'("(?:\\.|[^"\\])*")\s*;'
+          )
+          match = pattern.search(html)
+          if not match:
+              raise SystemExit('Could not extract material script')
+          js = json.loads(match.group(1))
 
-          def extract(name):
-              pattern = re.compile(
-                  rf'{name}\.textContent\s*=\s*'
-                  r'("(?:\\.|[^"\\])*")\s*;'
-              )
-              match = pattern.search(html)
-              if not match:
-                  raise SystemExit(f'Could not extract {name}')
-              return json.loads(match.group(1))
+          lines = js.splitlines()
+          hits = []
+          for index, line in enumerate(lines):
+              if 'new MutationObserver' in line or "attributeFilter: ['class']" in line or 'attributes: true' in line:
+                  hits.append(index)
 
-          css = extract('materialStyle')
-          js = extract('materialScript')
+          selected = set()
+          for index in hits:
+              selected.update(range(max(0, index - 12), min(len(lines), index + 18)))
 
-          required = [
-              'engram-material-inline-v1',
-              'engram-playful-hero-v2',
-              'engram-premium-polish-v3',
-              'engram-premium-stability-v4',
-              'engram-dexter-motion-v7',
-              'm3DexterScreenIn',
-              'the screen enters as one unit',
-              'f-dayTotal',
-          ]
-          forbidden = [
-              'new IntersectionObserver',
-              "rootMargin: '120px 0px 220px 0px'",
-              'engram-scroll-smooth-v5',
-              'engram-tab-smooth-v6',
-              "screen.classList.add('m3-tab-entering')",
-              'replayCharts(screen)',
-              'attributeOldValue: true',
-          ]
+          out = []
+          previous = -2
+          for index in sorted(selected):
+              if index > previous + 1:
+                  out.append('---')
+              out.append(f'{index + 1:04d}: {lines[index]}')
+              previous = index
 
-          missing = [token for token in required if token not in html]
-          present = [token for token in forbidden if token in html]
-          if missing:
-              raise SystemExit(f'Missing required tokens: {missing}')
-          if present:
-              raise SystemExit(f'Heavy motion orchestration remains: {present}')
-          if css.count('{') != css.count('}'):
-              raise SystemExit('CSS braces are unbalanced')
-          if css.count('engram-dexter-motion-v7') != 1:
-              raise SystemExit('Dexter motion layer was embedded more than once')
-
-          mutation_count = js.count('new MutationObserver')
-          intersection_count = js.count('new IntersectionObserver')
-          class_observer_count = js.count("attributeFilter: ['class']")
-
-          Path('/tmp/engram-material.js').write_text(js, encoding='utf-8')
-          report = [
-              'Dexter motion validation: PASS',
-              f'HTML bytes: {html_path.stat().st_size}',
-              f'CSS characters: {len(css)}',
-              f'JavaScript characters: {len(js)}',
-              f'MutationObservers retained: {mutation_count}',
-              f'IntersectionObservers retained: {intersection_count}',
-              f'Class-attribute observers retained: {class_observer_count}',
-              'Screen transition: opacity + translate3d only',
-              'Scroll reveal observer: removed',
-              'Tab hero/chart replay: removed',
-              'Continuous premium decoration: disabled',
-          ]
-          Path('analysis/dexter-motion-validation.txt').write_text('\n'.join(report) + '\n', encoding='utf-8')
-          print('\n'.join(report))
+          out.append('---')
+          out.append(f'MutationObservers: {js.count("new MutationObserver")}')
+          out.append(f'Class observers: {js.count("attributeFilter: [\'class\']")}')
+          Path('analysis/motion-observer-context.txt').write_text('\n'.join(out) + '\n', encoding='utf-8')
+          print('\n'.join(out))
           PY
-          node --check /tmp/engram-material.js
-          git diff --check
 
-      - name: Commit validation report
+      - name: Commit observer context
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add analysis/dexter-motion-validation.txt
-          git commit -m 'Validate Dexter-style motion bundle'
+          git add analysis/motion-observer-context.txt
+          git commit -m 'Inspect remaining motion observers'
           git push origin HEAD:codex/material-you-premium-polish
