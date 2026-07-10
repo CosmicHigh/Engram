@@ -1,8 +1,8 @@
 Traceback (most recent call last):
-  File "/home/runner/work/Engram/Engram/scripts/apply_dexter_motion_fix.py", line 259, in <module>
+  File "/home/runner/work/Engram/Engram/scripts/apply_dexter_motion_fix.py", line 257, in <module>
     main()
-  File "/home/runner/work/Engram/Engram/scripts/apply_dexter_motion_fix.py", line 240, in main
-    raise RuntimeError(f"Generated bundle is missing Dexter motion tokens: {missing}")
-RuntimeError: Generated bundle is missing Dexter motion tokens: ['subtree: true,\n      childList: true']
+  File "/home/runner/work/Engram/Engram/scripts/apply_dexter_motion_fix.py", line 250, in main
+    raise RuntimeError(f"Orchestration-heavy motion remains: {present}")
+RuntimeError: Orchestration-heavy motion remains: ['engram-scroll-smooth-v5']
 
 EXIT_CODE=1
