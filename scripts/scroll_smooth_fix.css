@@ -1,0 +1,57 @@
+/* engram-scroll-smooth-v5 */
+
+/* Reveal cards before they enter the viewport and keep the animation compositor-only. */
+.m3-reveal{
+  opacity:0!important;
+  transform:translate3d(0,12px,0)!important;
+  filter:none!important;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  will-change:transform,opacity
+}
+.m3-reveal.m3-visible{
+  opacity:1!important;
+  transform:translate3d(0,0,0)!important;
+  filter:none!important;
+  transition:
+    opacity .28s cubic-bezier(.2,.75,.25,1),
+    transform .36s cubic-bezier(.2,.82,.22,1)!important
+}
+.m3-reveal-settled{
+  opacity:1!important;
+  transform:none!important;
+  filter:none!important;
+  will-change:auto!important
+}
+
+/* While the finger is moving, pause paint-heavy decorative motion. */
+html.m3-user-scrolling body::before,
+html.m3-user-scrolling body::after,
+html.m3-user-scrolling .m3-premium-grid,
+html.m3-user-scrolling .m3-premium-mesh::before,
+html.m3-user-scrolling .m3-premium-mesh::after,
+html.m3-user-scrolling .m3-hero-card::before,
+html.m3-user-scrolling .m3-hero-card::after,
+html.m3-user-scrolling .btn-primary::after,
+html.m3-user-scrolling .nav-btn.active::before,
+html.m3-user-scrolling .m3-empty-core,
+html.m3-user-scrolling .m3-empty-orbit,
+html.m3-user-scrolling .sheet::before{
+  animation-play-state:paused!important
+}
+html.m3-user-scrolling .m3-premium-card,
+html.m3-user-scrolling .card,
+html.m3-user-scrolling .stat,
+html.m3-user-scrolling .hist-item,
+html.m3-user-scrolling .chart-wrap{
+  transition-duration:.001ms!important
+}
+
+@media(prefers-reduced-motion:reduce){
+  .m3-reveal,.m3-reveal.m3-visible,.m3-reveal-settled{
+    opacity:1!important;
+    transform:none!important;
+    transition:none!important;
+    will-change:auto!important
+  }
+}
