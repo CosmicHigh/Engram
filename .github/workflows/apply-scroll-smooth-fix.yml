@@ -1,0 +1,78 @@
+name: Apply smooth scroll reveal fix
+
+on:
+  push:
+    branches:
+      - codex/material-you-premium-polish
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out premium branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/material-you-premium-polish
+          fetch-depth: 0
+
+      - name: Apply smooth scroll fix
+        run: python3 scripts/apply_scroll_smooth_fix.py
+
+      - name: Validate standalone bundle
+        run: |
+          python3 - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          html = Path('app/src/main/assets/engram.html').read_text(encoding='utf-8')
+          required = [
+              'engram-scroll-smooth-v5',
+              "rootMargin: '120px 0px 220px 0px'",
+              'threshold: 0',
+              'm3-reveal-settled',
+              'm3-user-scrolling',
+              'translate3d(0,12px,0)',
+              'f-dayTotal',
+          ]
+          missing = [token for token in required if token not in html]
+          if missing:
+              raise SystemExit(f'Missing scroll-smoothing tokens: {missing}')
+
+          def extract(name):
+              pattern = re.compile(
+                  rf'{name}\.textContent\s*=\s*'
+                  r'("(?:\\.|[^"\\])*")\s*;'
+              )
+              match = pattern.search(html)
+              if not match:
+                  raise SystemExit(f'Could not extract {name}')
+              return json.loads(match.group(1))
+
+          css = extract('materialStyle')
+          js = extract('materialScript')
+          if css.count('{') != css.count('}'):
+              raise SystemExit('CSS braces are unbalanced')
+          if js.count('engram-scroll-smooth-v5') != 1:
+              raise SystemExit('Scroll fix JavaScript was embedded more than once')
+          Path('/tmp/engram-scroll-smooth.js').write_text(js, encoding='utf-8')
+          print(f'Validated standalone HTML: {len(html):,} characters')
+          PY
+          node --check /tmp/engram-scroll-smooth.js
+          git diff --check
+
+      - name: Commit stable standalone HTML
+        run: |
+          if git diff --quiet -- app/src/main/assets/engram.html; then
+            echo 'engram.html already includes the smooth scroll fix.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/assets/engram.html
+          git commit -m 'Make card reveals early and scroll-smooth'
+          git push origin HEAD:codex/material-you-premium-polish
