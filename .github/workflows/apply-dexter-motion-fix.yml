@@ -1,4 +1,4 @@
-name: Apply Dexter-style motion architecture
+name: Validate Dexter-style motion architecture
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  bundle:
+  validate:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -19,31 +19,84 @@ jobs:
           ref: codex/material-you-premium-polish
           fetch-depth: 0
 
-      - name: Run patch and capture diagnostics
-        id: patch
-        shell: bash
+      - name: Extract and audit standalone bundle
         run: |
-          set +e
-          python3 scripts/apply_dexter_motion_fix.py > /tmp/dexter-motion-run.txt 2>&1
-          code=$?
-          set -e
-          mkdir -p analysis
-          cp /tmp/dexter-motion-run.txt analysis/dexter-motion-run.txt
-          printf '\nEXIT_CODE=%s\n' "$code" >> analysis/dexter-motion-run.txt
-          cat analysis/dexter-motion-run.txt
-          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          python3 - <<'PY'
+          import json
+          import re
+          from pathlib import Path
 
-      - name: Commit diagnostics or generated HTML
+          html_path = Path('app/src/main/assets/engram.html')
+          html = html_path.read_text(encoding='utf-8')
+
+          def extract(name):
+              pattern = re.compile(
+                  rf'{name}\.textContent\s*=\s*'
+                  r'("(?:\\.|[^"\\])*")\s*;'
+              )
+              match = pattern.search(html)
+              if not match:
+                  raise SystemExit(f'Could not extract {name}')
+              return json.loads(match.group(1))
+
+          css = extract('materialStyle')
+          js = extract('materialScript')
+
+          required = [
+              'engram-material-inline-v1',
+              'engram-playful-hero-v2',
+              'engram-premium-polish-v3',
+              'engram-premium-stability-v4',
+              'engram-dexter-motion-v7',
+              'm3DexterScreenIn',
+              'the screen enters as one unit',
+              'f-dayTotal',
+          ]
+          forbidden = [
+              'new IntersectionObserver',
+              "rootMargin: '120px 0px 220px 0px'",
+              'engram-scroll-smooth-v5',
+              'engram-tab-smooth-v6',
+              "screen.classList.add('m3-tab-entering')",
+              'replayCharts(screen)',
+              'attributeOldValue: true',
+          ]
+
+          missing = [token for token in required if token not in html]
+          present = [token for token in forbidden if token in html]
+          if missing:
+              raise SystemExit(f'Missing required tokens: {missing}')
+          if present:
+              raise SystemExit(f'Heavy motion orchestration remains: {present}')
+          if css.count('{') != css.count('}'):
+              raise SystemExit('CSS braces are unbalanced')
+          if css.count('engram-dexter-motion-v7') != 1:
+              raise SystemExit('Dexter motion layer was embedded more than once')
+
+          Path('/tmp/engram-material.js').write_text(js, encoding='utf-8')
+          report = [
+              'Dexter motion validation: PASS',
+              f'HTML bytes: {html_path.stat().st_size}',
+              f'CSS characters: {len(css)}',
+              f'JavaScript characters: {len(js)}',
+              f'MutationObservers retained: {js.count("new MutationObserver")}',
+              f'IntersectionObservers retained: {js.count("new IntersectionObserver")}',
+              f'Class-attribute observers retained: {js.count("attributeFilter: [\\\'class\\\']")}',
+              'Screen transition: opacity + translate3d only',
+              'Scroll reveal observer: removed',
+              'Tab hero/chart replay: removed',
+              'Continuous premium decoration: disabled',
+          ]
+          Path('analysis/dexter-motion-validation.txt').write_text('\n'.join(report) + '\n', encoding='utf-8')
+          print('\n'.join(report))
+          PY
+          node --check /tmp/engram-material.js
+          git diff --check
+
+      - name: Commit validation report
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add analysis/dexter-motion-run.txt
-          if [ "${{ steps.patch.outputs.exit_code }}" = "0" ]; then
-            git add app/src/main/assets/engram.html
-          fi
-          git commit -m 'Capture Dexter motion bundle result'
+          git add analysis/dexter-motion-validation.txt
+          git commit -m 'Validate Dexter-style motion bundle'
           git push origin HEAD:codex/material-you-premium-polish
-
-      - name: Fail when patch failed
-        if: steps.patch.outputs.exit_code != '0'
-        run: exit 1
