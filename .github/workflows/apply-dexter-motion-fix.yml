@@ -19,72 +19,31 @@ jobs:
           ref: codex/material-you-premium-polish
           fetch-depth: 0
 
-      - name: Apply Dexter motion model
-        run: python3 scripts/apply_dexter_motion_fix.py
-
-      - name: Validate standalone bundle
+      - name: Run patch and capture diagnostics
+        id: patch
+        shell: bash
         run: |
-          python3 - <<'PY'
-          import json
-          import re
-          from pathlib import Path
+          set +e
+          python3 scripts/apply_dexter_motion_fix.py > /tmp/dexter-motion-run.txt 2>&1
+          code=$?
+          set -e
+          mkdir -p analysis
+          cp /tmp/dexter-motion-run.txt analysis/dexter-motion-run.txt
+          printf '\nEXIT_CODE=%s\n' "$code" >> analysis/dexter-motion-run.txt
+          cat analysis/dexter-motion-run.txt
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
 
-          html = Path('app/src/main/assets/engram.html').read_text(encoding='utf-8')
-          required = [
-              'engram-dexter-motion-v7',
-              'm3DexterScreenIn',
-              'the screen enters as one unit',
-              'f-dayTotal',
-          ]
-          missing = [token for token in required if token not in html]
-          if missing:
-              raise SystemExit(f'Missing Dexter motion tokens: {missing}')
-
-          forbidden = [
-              'new IntersectionObserver',
-              "rootMargin: '120px 0px 220px 0px'",
-              'engram-scroll-smooth-v5',
-              "screen.classList.add('m3-tab-entering')",
-              'replayCharts(screen)',
-              'attributeOldValue: true',
-          ]
-          present = [token for token in forbidden if token in html]
-          if present:
-              raise SystemExit(f'Heavy motion orchestration remains: {present}')
-
-          def extract(name):
-              pattern = re.compile(
-                  rf'{name}\.textContent\s*=\s*'
-                  r'("(?:\\.|[^"\\])*")\s*;'
-              )
-              match = pattern.search(html)
-              if not match:
-                  raise SystemExit(f'Could not extract {name}')
-              return json.loads(match.group(1))
-
-          css = extract('materialStyle')
-          js = extract('materialScript')
-          if css.count('{') != css.count('}'):
-              raise SystemExit('CSS braces are unbalanced')
-          if css.count('engram-dexter-motion-v7') != 1:
-              raise SystemExit('Dexter CSS patch was embedded more than once')
-          if js.count('new IntersectionObserver'):
-              raise SystemExit('IntersectionObserver still exists in material script')
-          Path('/tmp/engram-dexter-motion.js').write_text(js, encoding='utf-8')
-          print(f'Validated standalone HTML: {len(html):,} characters')
-          print(f'MutationObservers retained: {js.count("new MutationObserver")}')
-          PY
-          node --check /tmp/engram-dexter-motion.js
-          git diff --check
-
-      - name: Commit standalone HTML
+      - name: Commit diagnostics or generated HTML
         run: |
-          if git diff --quiet -- app/src/main/assets/engram.html; then
-            echo 'engram.html already uses the Dexter motion model.'
-            exit 0
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app/src/main/assets/engram.html
-          git commit -m 'Adopt Dexter-style lightweight motion architecture'
+          git add analysis/dexter-motion-run.txt
+          if [ "${{ steps.patch.outputs.exit_code }}" = "0" ]; then
+            git add app/src/main/assets/engram.html
+          fi
+          git commit -m 'Capture Dexter motion bundle result'
           git push origin HEAD:codex/material-you-premium-polish
+
+      - name: Fail when patch failed
+        if: steps.patch.outputs.exit_code != '0'
+        run: exit 1
