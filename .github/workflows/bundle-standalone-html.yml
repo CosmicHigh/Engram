@@ -1,0 +1,54 @@
+name: Bundle standalone ENGRAM HTML
+
+on:
+  push:
+    branches:
+      - codex/material-you-3-redesign
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out redesign branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/material-you-3-redesign
+          fetch-depth: 0
+
+      - name: Inline Material CSS and JavaScript
+        run: python3 scripts/bundle_material_into_html.py
+
+      - name: Validate generated standalone file
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          html = Path('app/src/main/assets/engram.html').read_text(encoding='utf-8')
+          required = [
+              'engram-material-inline-v1',
+              "materialStyle.id = 'engram-material-css'",
+              "materialScript.id = 'engram-material-js'",
+              'data-m3-theme',
+              'f-dayTotal',
+          ]
+          missing = [item for item in required if item not in html]
+          if missing:
+              raise SystemExit(f'Missing generated tokens: {missing}')
+          print(f'Validated standalone HTML: {len(html):,} characters')
+          PY
+          git diff --check
+
+      - name: Commit generated HTML
+        run: |
+          if git diff --quiet -- app/src/main/assets/engram.html; then
+            echo 'engram.html is already bundled.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/assets/engram.html
+          git commit -m 'Bundle Material redesign into standalone engram.html'
+          git push origin HEAD:codex/material-you-3-redesign
