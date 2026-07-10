@@ -1,0 +1,232 @@
+/* engram-premium-polish-v3 */
+:root{
+  --tab-primary:#6750a4;
+  --tab-secondary:#7d6db0;
+  --tab-tertiary:#b66b8f;
+  --tab-soft:color-mix(in srgb,var(--tab-primary) 14%,transparent);
+  --tab-glow:color-mix(in srgb,var(--tab-primary) 32%,transparent);
+}
+html[data-m3-tab="gt"]{--tab-primary:#5f4fd6;--tab-secondary:#2f80ed;--tab-tertiary:#c24586}
+html[data-m3-tab="inst"]{--tab-primary:#00796b;--tab-secondary:#12a4a6;--tab-tertiary:#68a91f}
+html[data-m3-tab="exec"]{--tab-primary:#c65d00;--tab-secondary:#e04646;--tab-tertiary:#a94f91}
+html[data-m3-tab="week"]{--tab-primary:#1267b8;--tab-secondary:#5368d8;--tab-tertiary:#7f56c5}
+html[data-m3-theme="dark"][data-m3-tab="gt"]{--tab-primary:#b8a5ff;--tab-secondary:#8fc5ff;--tab-tertiary:#f0a7d2}
+html[data-m3-theme="dark"][data-m3-tab="inst"]{--tab-primary:#72e3cf;--tab-secondary:#72d8e2;--tab-tertiary:#b7df78}
+html[data-m3-theme="dark"][data-m3-tab="exec"]{--tab-primary:#ffba78;--tab-secondary:#ff9b8e;--tab-tertiary:#e9a6d0}
+html[data-m3-theme="dark"][data-m3-tab="week"]{--tab-primary:#91caff;--tab-secondary:#aeb7ff;--tab-tertiary:#cfabff}
+
+/* Keep the existing playful tab entry, but stop unrelated mutations from replaying the whole hero region. */
+.m3-hero-card.m3-hero-replay{animation:none!important}
+.screen.m3-tab-entering .m3-hero-card.m3-hero-replay{
+  animation:m3PremiumHeroEnter .82s cubic-bezier(.12,1.32,.22,1) both!important;
+  animation-delay:calc(var(--hero-index) * .09s)!important
+}
+
+/* Premium hero surface: layered light, moving mesh, pointer-aware shine and subtle depth. */
+.m3-premium-card{
+  --px:50%;--py:35%;--tilt-x:0deg;--tilt-y:0deg;--lift:0px;
+  transform-style:preserve-3d;
+  background:
+    radial-gradient(circle at var(--px) var(--py),rgba(255,255,255,.46) 0 7%,rgba(255,255,255,.14) 18%,transparent 38%),
+    linear-gradient(145deg,var(--hero-a),var(--hero-b) 54%,var(--hero-c))!important;
+  box-shadow:
+    0 24px 52px color-mix(in srgb,var(--hero-a) 31%,transparent),
+    0 7px 18px rgba(20,24,34,.13),
+    inset 0 1px 0 rgba(255,255,255,.58),
+    inset 0 -1px 0 rgba(17,21,28,.09)!important;
+  transition:transform .28s cubic-bezier(.2,.8,.2,1),filter .28s,box-shadow .35s!important
+}
+.m3-premium-card.m3-tilt-active{
+  transform:perspective(920px) rotateX(var(--tilt-y)) rotateY(var(--tilt-x)) translateY(var(--lift)) scale(1.015)!important;
+  filter:saturate(1.08) contrast(1.02)
+}
+.m3-premium-card>*:not(.m3-premium-layer){position:relative;z-index:6;transform:translateZ(26px)}
+.m3-premium-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:inherit}
+.m3-premium-grid{
+  z-index:1;opacity:.24;
+  background-image:
+    linear-gradient(rgba(255,255,255,.16) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.16) 1px,transparent 1px);
+  background-size:28px 28px;
+  -webkit-mask-image:linear-gradient(135deg,rgba(0,0,0,.6),transparent 72%);
+  mask-image:linear-gradient(135deg,rgba(0,0,0,.6),transparent 72%);
+  animation:m3PremiumGrid 12s linear infinite
+}
+.m3-premium-mesh{z-index:2;filter:blur(12px) saturate(1.2);opacity:.72}
+.m3-premium-mesh::before,.m3-premium-mesh::after{
+  content:"";position:absolute;border-radius:50%;mix-blend-mode:screen
+}
+.m3-premium-mesh::before{
+  width:155px;height:155px;right:-38px;top:-62px;
+  background:radial-gradient(circle at 34% 34%,rgba(255,255,255,.88),color-mix(in srgb,var(--hero-c) 72%,transparent) 42%,transparent 72%);
+  animation:m3PremiumOrbA 7s ease-in-out infinite alternate
+}
+.m3-premium-mesh::after{
+  width:130px;height:130px;left:-52px;bottom:-68px;
+  background:radial-gradient(circle at 60% 35%,rgba(255,255,255,.56),color-mix(in srgb,var(--hero-b) 78%,transparent) 46%,transparent 72%);
+  animation:m3PremiumOrbB 8.4s ease-in-out infinite alternate
+}
+.m3-premium-shine{
+  z-index:5;
+  background:radial-gradient(circle at var(--px) var(--py),rgba(255,255,255,.72) 0 2%,rgba(255,255,255,.26) 8%,transparent 28%);
+  opacity:.55;mix-blend-mode:screen;transition:opacity .2s
+}
+.m3-premium-card:not(.m3-tilt-active) .m3-premium-shine{opacity:.2}
+.m3-premium-card .v{text-shadow:0 2px 0 rgba(255,255,255,.1),0 8px 22px rgba(20,24,34,.12)}
+.m3-premium-card .l{letter-spacing:.1px}
+.m3-premium-card.m3-context-update{
+  animation:m3ContextCard .72s cubic-bezier(.12,1.34,.22,1)!important
+}
+.m3-premium-card.m3-context-update::selection{background:transparent}
+.m3-context-number{animation:m3ContextNumber .7s cubic-bezier(.12,1.5,.22,1)!important}
+.m3-context-ring{
+  position:absolute;z-index:7;inset:10px;border:2px solid rgba(255,255,255,.82);border-radius:calc(var(--r3) - 7px);
+  pointer-events:none;animation:m3ContextRing .75s cubic-bezier(.12,.8,.2,1) forwards
+}
+
+/* Cohesive section accents. */
+.group-label{display:flex;align-items:center;gap:10px}
+.group-label::before{
+  content:"";width:8px;height:8px;border-radius:50%;flex:0 0 auto;
+  background:linear-gradient(135deg,var(--tab-primary),var(--tab-tertiary));
+  box-shadow:0 0 0 5px var(--tab-soft),0 0 18px var(--tab-glow)
+}
+.group-label::after{
+  content:"";height:1px;flex:1;opacity:.35;
+  background:linear-gradient(90deg,var(--tab-primary),transparent)
+}
+
+/* Richer chart containers and animated series. */
+.chart-wrap.m3-chart-premium{
+  position:relative;isolation:isolate;padding:10px 8px 4px;border-radius:22px!important;
+  background:
+    radial-gradient(circle at 88% 4%,var(--tab-soft),transparent 38%),
+    linear-gradient(160deg,color-mix(in srgb,var(--surface) 94%,var(--tab-primary)),var(--surface));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--outline-v) 48%,transparent),0 13px 31px rgba(25,29,38,.08)
+}
+.chart-wrap.m3-chart-premium::before{
+  content:"";position:absolute;inset:8px;border-radius:16px;pointer-events:none;z-index:-1;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--tab-primary) 9%,transparent),transparent 52%,color-mix(in srgb,var(--tab-tertiary) 8%,transparent))
+}
+.m3-chart-premium svg{filter:drop-shadow(0 8px 15px rgba(25,29,38,.06));overflow:visible}
+.m3-data-line{
+  filter:drop-shadow(0 0 4px var(--tab-glow));
+  stroke-linecap:round!important;stroke-linejoin:round!important;
+  animation:m3PremiumLine 1.05s cubic-bezier(.12,.8,.18,1) both!important
+}
+.m3-data-point{
+  transform-box:fill-box;transform-origin:center;
+  filter:drop-shadow(0 0 5px var(--tab-glow));
+  animation:m3PremiumPoint .68s cubic-bezier(.12,1.5,.22,1) both!important
+}
+.m3-data-bar{
+  transform-box:fill-box;transform-origin:center bottom;
+  filter:drop-shadow(0 4px 7px var(--tab-glow));
+  animation:m3PremiumBar .85s cubic-bezier(.12,1.24,.22,1) both!important
+}
+.m3-chart-premium.m3-chart-updating{animation:m3ChartAura .68s cubic-bezier(.12,1,.22,1)}
+.m3-chart-premium.m3-chart-updating .m3-data-line{animation:m3PremiumLine .85s cubic-bezier(.12,.8,.18,1) both!important}
+.m3-chart-premium.m3-chart-updating .m3-data-point{animation:m3PremiumPoint .55s cubic-bezier(.12,1.5,.22,1) both!important}
+.m3-chart-premium.m3-chart-updating .m3-data-bar{animation:m3PremiumBar .72s cubic-bezier(.12,1.24,.22,1) both!important}
+
+/* Material switches and more tactile controls. */
+input[type="checkbox"]{
+  appearance:none!important;-webkit-appearance:none!important;
+  width:50px!important;height:30px!important;min-width:50px;border:0!important;border-radius:999px!important;
+  background:var(--outline-v)!important;position:relative;cursor:pointer;padding:0!important;
+  box-shadow:inset 0 0 0 1px var(--outline);transition:background .28s,box-shadow .28s,transform .18s!important
+}
+input[type="checkbox"]::before{
+  content:"";position:absolute;width:20px;height:20px;left:5px;top:5px;border-radius:50%;
+  background:var(--surface);box-shadow:0 2px 6px rgba(20,24,34,.28);
+  transition:transform .34s cubic-bezier(.12,1.35,.22,1),width .18s,background .28s
+}
+input[type="checkbox"]:checked{background:var(--tab-primary)!important;box-shadow:0 0 0 4px var(--tab-soft)!important}
+input[type="checkbox"]:checked::before{transform:translateX(20px);background:var(--on-p)}
+input[type="checkbox"]:active{transform:scale(.94)}
+input[type="checkbox"]:active::before{width:25px}
+input[type="checkbox"]:checked:active::before{transform:translateX(15px)}
+
+.btn,.icon-btn,.gear,.m3-theme-toggle,.weeknav .wbtn{--mx:50%;--my:50%}
+.btn::before,.icon-btn::before,.gear::before,.m3-theme-toggle::before,.weeknav .wbtn::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;
+  background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.45),transparent 42%);
+  transition:opacity .2s
+}
+.btn.m3-pointer-active::before,.icon-btn.m3-pointer-active::before,.gear.m3-pointer-active::before,.m3-theme-toggle.m3-pointer-active::before,.weeknav .wbtn.m3-pointer-active::before{opacity:.62}
+.btn-primary{
+  background:linear-gradient(115deg,var(--tab-primary),var(--tab-secondary) 58%,var(--tab-tertiary))!important;
+  box-shadow:0 10px 24px var(--tab-glow)!important
+}
+.btn-primary:active{box-shadow:0 4px 11px var(--tab-glow)!important}
+input:not([type="checkbox"]):focus,select:focus,textarea:focus{transform:translateY(-2px);box-shadow:0 8px 18px var(--tab-soft)!important}
+.sheet .btn,.sheet input,.sheet select,.sheet textarea{animation:m3SheetChild .48s cubic-bezier(.12,1.2,.22,1) both}
+.sheet .btn:nth-of-type(2){animation-delay:.05s}.sheet .btn:nth-of-type(3){animation-delay:.1s}
+.sheet::before{animation:m3HandlePulse 2.8s ease-in-out infinite}
+.m3-toast.show{animation:m3ToastSpring .5s cubic-bezier(.12,1.28,.22,1)}
+
+/* History gets a visual rhythm instead of repeating anonymous white cards. */
+.hist-item.m3-history-personality{
+  --history-index:0;position:relative;padding-left:3px!important;overflow:hidden!important;
+  background:
+    linear-gradient(160deg,color-mix(in srgb,var(--surface) 97%,var(--tab-primary)),var(--surface))!important
+}
+.hist-item.m3-history-personality::before{
+  content:"";position:absolute;left:0;top:13px;bottom:13px;width:4px;border-radius:0 8px 8px 0;
+  background:linear-gradient(180deg,var(--tab-primary),var(--tab-tertiary));
+  opacity:calc(.62 + (var(--history-index) * .035));box-shadow:0 0 15px var(--tab-glow)
+}
+.hist-item.m3-history-personality::after{
+  content:"";position:absolute;width:88px;height:88px;right:-38px;top:-44px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,color-mix(in srgb,var(--tab-primary) 13%,transparent),transparent 70%)
+}
+.hist-item.m3-history-personality.open{transform:translateY(-2px);box-shadow:0 16px 34px rgba(25,29,38,.13)!important}
+.hist-item.m3-history-personality .hist-head{position:relative;z-index:2}
+
+/* Empty-state illustration is CSS-only and inherits each tab's palette. */
+.m3-empty-state{
+  text-align:center!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+  gap:10px;min-height:190px;padding:28px 20px!important;border-radius:26px!important;
+  background:
+    radial-gradient(circle at 50% 12%,var(--tab-soft),transparent 42%),
+    linear-gradient(160deg,color-mix(in srgb,var(--surface) 96%,var(--tab-primary)),var(--surface))!important;
+  border:1px dashed color-mix(in srgb,var(--tab-primary) 34%,var(--outline-v))!important
+}
+.m3-empty-visual{width:98px;height:88px;position:relative;margin-bottom:2px;isolation:isolate}
+.m3-empty-core{
+  position:absolute;width:48px;height:48px;left:25px;top:20px;border-radius:18px;
+  background:linear-gradient(135deg,var(--tab-primary),var(--tab-tertiary));
+  box-shadow:0 12px 27px var(--tab-glow);animation:m3EmptyFloat 3.2s ease-in-out infinite
+}
+.m3-empty-core::before,.m3-empty-core::after{content:"";position:absolute;background:rgba(255,255,255,.84);border-radius:999px}
+.m3-empty-core::before{width:23px;height:5px;left:12px;top:15px;transform:rotate(-8deg)}
+.m3-empty-core::after{width:15px;height:5px;left:16px;top:27px;transform:rotate(7deg)}
+.m3-empty-orbit{position:absolute;inset:5px;border:1px solid color-mix(in srgb,var(--tab-primary) 45%,transparent);border-radius:50%;animation:m3EmptyOrbit 7s linear infinite}
+.m3-empty-orbit::before,.m3-empty-orbit::after{content:"";position:absolute;width:10px;height:10px;border-radius:50%;background:var(--tab-secondary);box-shadow:0 0 12px var(--tab-glow)}
+.m3-empty-orbit::before{left:4px;top:17px}.m3-empty-orbit::after{right:7px;bottom:12px;background:var(--tab-tertiary)}
+.m3-empty-state>p,.m3-empty-state>div:not(.m3-empty-visual),.m3-empty-state>span{position:relative;z-index:2;color:var(--on-v)!important}
+
+@keyframes m3PremiumHeroEnter{0%{opacity:0;transform:translateY(44px) scale(.78) rotateX(15deg)}62%{opacity:1;transform:translateY(-7px) scale(1.035) rotateX(-2deg)}82%{transform:translateY(2px) scale(.99)}100%{opacity:1;transform:none}}
+@keyframes m3PremiumGrid{to{background-position:56px 28px}}
+@keyframes m3PremiumOrbA{to{transform:translate(-26px,24px) rotate(35deg) scale(1.18)}}
+@keyframes m3PremiumOrbB{to{transform:translate(28px,-20px) rotate(-25deg) scale(1.12)}}
+@keyframes m3ContextCard{0%{transform:scale(.96)}38%{transform:scale(1.045) rotate(-.5deg);filter:saturate(1.2)}72%{transform:scale(.99) rotate(.2deg)}100%{transform:none}}
+@keyframes m3ContextNumber{0%{transform:scale(.65) translateY(12px);opacity:.3;filter:blur(5px)}55%{transform:scale(1.24) translateY(-4px);opacity:1;filter:none}78%{transform:scale(.94)}100%{transform:none;opacity:1}}
+@keyframes m3ContextRing{0%{opacity:.9;transform:scale(.94)}100%{opacity:0;transform:scale(1.08)}}
+@keyframes m3PremiumLine{from{opacity:.15;stroke-dasharray:1 1400;stroke-dashoffset:180}to{opacity:1;stroke-dasharray:1400 1;stroke-dashoffset:0}}
+@keyframes m3PremiumPoint{0%{opacity:0;transform:scale(.1)}62%{opacity:1;transform:scale(1.55)}100%{opacity:1;transform:scale(1)}}
+@keyframes m3PremiumBar{0%{opacity:.25;transform:scaleY(.04) scaleX(.76)}68%{opacity:1;transform:scaleY(1.1) scaleX(1.06)}100%{opacity:1;transform:none}}
+@keyframes m3ChartAura{0%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--outline-v) 48%,transparent),0 0 0 0 var(--tab-soft)}50%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tab-primary) 54%,transparent),0 0 0 9px transparent}100%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--outline-v) 48%,transparent),0 13px 31px rgba(25,29,38,.08)}}
+@keyframes m3SheetChild{0%{opacity:0;transform:translateY(18px) scale(.97)}100%{opacity:1;transform:none}}
+@keyframes m3HandlePulse{0%,100%{transform:scaleX(1);opacity:.55}50%{transform:scaleX(1.42);opacity:.85}}
+@keyframes m3ToastSpring{0%{transform:translate(-50%,24px) scale(.86);opacity:0}70%{transform:translate(-50%,-3px) scale(1.03);opacity:1}100%{transform:translate(-50%,0) scale(1);opacity:1}}
+@keyframes m3EmptyFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(3deg)}}
+@keyframes m3EmptyOrbit{to{transform:rotate(360deg)}}
+
+@media(hover:none){.m3-premium-card.m3-tilt-active{transform:scale(.985)!important}}
+@media(prefers-reduced-motion:reduce){
+  .m3-premium-grid,.m3-premium-mesh::before,.m3-premium-mesh::after,.m3-empty-core,.m3-empty-orbit,.sheet::before,
+  .m3-data-line,.m3-data-point,.m3-data-bar,.m3-context-number,.m3-context-ring,.m3-toast.show,
+  .screen.m3-tab-entering .m3-hero-card.m3-hero-replay{animation:none!important}
+  .m3-premium-card,.m3-premium-card.m3-tilt-active{transform:none!important;transition:none!important}
+}
