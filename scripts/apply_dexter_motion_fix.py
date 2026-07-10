@@ -52,6 +52,15 @@ def remove_marked_iife(source: str, marker: str) -> str:
     return source[:start].rstrip() + "\n\n" + source[end:].lstrip()
 
 
+def remove_marked_css(source: str, marker: str) -> str:
+    start = source.find("/* " + marker)
+    if start < 0:
+        raise RuntimeError(f"Could not find CSS section {marker}")
+    next_marker = source.find("\n/* engram-", start + len(marker) + 3)
+    end = len(source) if next_marker < 0 else next_marker
+    return source[:start].rstrip() + "\n\n" + source[end:].lstrip()
+
+
 def main() -> None:
     html = HTML_PATH.read_text(encoding="utf-8")
     if html.count(MARKER) >= 1:
@@ -61,6 +70,9 @@ def main() -> None:
     css_match, css = read_assignment(html, "materialStyle")
     script_match, script = read_assignment(html, "materialScript")
 
+    # Remove the two prior performance override layers. v7 replaces them directly.
+    css = remove_marked_css(css, "engram-scroll-smooth-v5")
+    css = remove_marked_css(css, "engram-tab-smooth-v6")
     css = css.rstrip() + "\n\n" + CSS_PATH.read_text(encoding="utf-8").strip() + "\n"
 
     old_reveal = """  function settleReveal(element) {
@@ -241,6 +253,7 @@ def main() -> None:
         "new IntersectionObserver",
         "rootMargin: '120px 0px 220px 0px'",
         "engram-scroll-smooth-v5",
+        "engram-tab-smooth-v6",
         "screen.classList.add('m3-tab-entering')",
         "replayCharts(screen)",
         "attributeOldValue: true",
